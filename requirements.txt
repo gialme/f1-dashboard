@@ -1,0 +1,7 @@
+Django>=4.0
+fastf1
+pandas
+matplotlib
+pytz
+requests
+requests_cache

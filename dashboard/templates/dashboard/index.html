@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* gray-900 */
+        }
+        .loader {
+            border-top-color: #3498db;
+            -webkit-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
+        }
+        @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <!-- Main Container -->
+    <div class="container mx-auto p-4 md:p-8">
+
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-white">{{ event_name }}</h1>
+            <p class="text-gray-400 mt-2">Dashboard with data from the latest race</p>
+        </header>
+
+        {% if error_message %}
+            <!-- Error Message -->
+            <div class="bg-red-900 border border-red-600 text-red-200 px-4 py-3 rounded-lg relative" role="alert">
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline">{{ error_message }}</span>
+            </div>
+        {% elif not results %}
+            <!-- Loading Indicator -->
+            <div id="loading" class="flex flex-col items-center justify-center p-8 bg-gray-800 rounded-lg shadow-lg">
+                <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-500 h-24 w-24 mb-4"></div>
+                <h2 class="text-center text-white text-xl font-semibold">Loading Race Data...</h2>
+                <p class="w-full text-center text-gray-400 mt-2">This may take a few seconds. FastF1 is retrieving the data...</p>
+            </div>
+        {% else %}
+            <!-- Dashboard Content with Tabs -->
+            <div>
+                <!-- Tab Navigation -->
+                <div class="mb-4 border-b border-gray-700">
+                    <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="myTab" role="tablist">
+                        <li class="mr-2" role="presentation">
+                            <button class="inline-block p-4 border-b-2 rounded-t-lg" id="results-tab-button" type="button" role="tab" aria-controls="resultsTab" aria-selected="false">Race Results</button>
+                        </li>
+                        <li class="mr-2" role="presentation">
+                            <button class="inline-block p-4 border-b-2 rounded-t-lg" id="telemetry-tab-button" type="button" role="tab" aria-controls="telemetryTab" aria-selected="false">Telemetry</button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="tabContent">
+                    <!-- Results Tab -->
+                    <div id="resultsTab" role="tabpanel" aria-labelledby="results-tab-button">
+                        <div class="overflow-x-auto relative shadow-md sm:rounded-lg">
+                            <table class="w-full text-sm text-left text-gray-400">
+                                <thead class="text-xs text-gray-300 uppercase bg-gray-700">
+                                    <tr>
+                                        <th scope="col" class="py-3 px-6">Pos</th>
+                                        <th scope="col" class="py-3 px-6">Driver</th>
+                                        <th scope="col" class="py-3 px-6">Team</th>
+                                        <th scope="col" class="py-3 px-6">Time</th>
+                                        <th scope="col" class="py-3 px-6">Status</th>
+                                        <th scope="col" class="py-3 px-6">Points</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in results %}
+                                    <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
+                                        <td class="py-4 px-6">{{ row.Position }}</td>
+                                        <td class="py-4 px-6 font-medium text-white whitespace-nowrap">{{ row.Driver }}</td>
+                                        <td class="py-4 px-6">{{ row.Team }}</td>
+                                        <td class="py-4 px-6">{{ row.Time }}</td>
+                                        <td class="py-4 px-6">{{ row.Status }}</td>
+                                        <td class="py-4 px-6 font-bold">{{ row.Points }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Telemetry Tab -->
+                    <div id="telemetryTab" class="hidden" role="tabpanel" aria-labelledby="telemetry-tab-button">
+                        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                            <h2 class="text-xl font-bold text-white mb-4 text-center">Telemetry Analysis - Fastest Lap</h2>
+                            {% if plot_url %}
+                            <img src="data:image/png;base64,{{ plot_url }}" alt="Telemetry Chart" class="w-full h-auto rounded-lg">
+                            {% else %}
+                            <p class="text-center text-gray-400">Chart not available.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Script for Tab Handling -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const resultsTabButton = document.getElementById('results-tab-button');
+            const telemetryTabButton = document.getElementById('telemetry-tab-button');
+            const resultsTabContent = document.getElementById('resultsTab');
+            const telemetryTabContent = document.getElementById('telemetryTab');
+            
+            if (resultsTabButton) { // Run the script only if elements exist
+                const activeClasses = ['text-blue-500', 'border-blue-500'];
+                const inactiveClasses = ['border-transparent', 'hover:text-gray-300', 'hover:border-gray-300', 'text-gray-400'];
+
+                function setActiveTab(activeButton, activeContent) {
+                    // Reset buttons
+                    [resultsTabButton, telemetryTabButton].forEach(button => {
+                        button.classList.remove(...activeClasses);
+                        button.classList.add(...inactiveClasses);
+                        button.setAttribute('aria-selected', 'false');
+                    });
+                    
+                    // Reset content visibility
+                    [resultsTabContent, telemetryTabContent].forEach(content => {
+                        content.classList.add('hidden');
+                    });
+
+                    // Set active button
+                    activeButton.classList.add(...activeClasses);
+                    activeButton.classList.remove(...inactiveClasses);
+                    activeButton.setAttribute('aria-selected', 'true');
+                    
+                    // Show active content
+                    activeContent.classList.remove('hidden');
+                }
+
+                // Event Listeners
+                resultsTabButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    setActiveTab(resultsTabButton, resultsTabContent);
+                });
+
+                telemetryTabButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    setActiveTab(telemetryTabButton, telemetryTabContent);
+                });
+
+                // Set initial state
+                setActiveTab(resultsTabButton, resultsTabContent);
+            }
+        });
+    </script>
+</body>
+</html>
