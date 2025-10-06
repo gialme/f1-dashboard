@@ -10,6 +10,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      DATABASE_NAME: ${{ secrets.DB_NAME }}
+      DATABASE_USER: ${{ secrets.DB_USER }}
+      DATABASE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DEBUG: True
+
     services:
       postgres:
         image: postgres:15
@@ -38,15 +47,6 @@ jobs:
     - name: Run migrations
       run: |
         python manage.py migrate --noinput
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DB_NAME: ${{ secrets.DB_NAME }}
-        DB_USER: ${{ secrets.DB_USER }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
     - name: Run Tests
-      env:
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DB_NAME: ${{ secrets.DB_NAME }}
-        DB_USER: ${{ secrets.DB_USER }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       run: |
         python manage.py test
