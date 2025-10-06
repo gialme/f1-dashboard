@@ -47,6 +47,42 @@ A Django web application that displays Formula 1 racing data and statistics usin
    http://localhost:8000
    ```
 
+## Deploy with Docker
+
+Using **Docker Compose**, you can easily build and run the entire environment with a single command.
+
+### Environment configuration
+
+Before starting, create a `.env` file in the root of the project and add the required environment variables:
+
+```txt
+# PostgreSQL
+DB_NAME=f1_dashboard_db
+DB_USER=postgres
+DB_PASSWORD=superpassword
+DB_HOST=db
+DB_PORT=5432
+
+# Django
+SECRET_KEY=changeme
+DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+```
+
+> [!WARNING]  
+> **Never commit** your `.env` file with sensitive information to public repositories.
+
+### Running the project
+
+To build and start all containers:
+
+``` bash
+docker-compose up --build
+```
+
+- The **PostgreSQL database** will run on port `5432`.
+- The **Django** web application will be available at [http://localhost:8000](http://localhost:8000).
+
 ## Acknowledgments
 
 - [FastF1](https://github.com/theOehrly/Fast-F1) - The amazing F1 data API
