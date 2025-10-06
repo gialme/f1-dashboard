@@ -12,11 +12,11 @@ jobs:
 
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      DATABASE_NAME: testdb
-      DATABASE_USER: testuser
-      DATABASE_PASSWORD: testpassword
-      DATABASE_HOST: localhost
-      DATABASE_PORT: 5432
+      DB_NAME: testdb
+      DB_USER: testuser
+      DB_PASSWORD: testpassword
+      DB_HOST: localhost
+      DB_PORT: 5432
       DEBUG: True
 
     services:
