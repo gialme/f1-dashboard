@@ -1,4 +1,5 @@
 import fastf1
+from fastf1.ergast import Ergast
 import pandas as pd
 from django.shortcuts import render
 import matplotlib.pyplot as plt
@@ -6,19 +7,19 @@ import io
 import urllib, base64
 from datetime import datetime
 import os
-import matplotlib
 
-matplotlib.use('Agg')
 
 def dashboard_view(render_request):
     """
     This view fetches last F1 race data and creates a graph
     """
-    plot_url = None
-    results_df = pd.DataFrame()
-    error_message = None
-    event_name = "Dashboard F1"
 
+    context = {
+        'next_race': None,
+        'driver_standings': [],
+        'constructor_standings': [],
+        'error_message': None,
+    }
     try:
         # Enable cache in order to speed up data loading
         # Cache is stored in the project root
@@ -28,7 +29,7 @@ def dashboard_view(render_request):
             
         fastf1.Cache.enable_cache(cache_dir)
 
-        # Fetch last disputed race
+        # Fetch next race
         current_year = datetime.now().year
         schedule = fastf1.get_event_schedule(current_year, include_testing=False)
         # Convert to UTC timezone
@@ -36,91 +37,52 @@ def dashboard_view(render_request):
         
         # Filter past events using 'today', which also is timezone-aware
         today = pd.Timestamp.now(tz='UTC')
-        past_events = schedule[schedule['EventDate'] < today]
+        future_events = schedule[schedule['EventDate'] > today].sort_values(by='EventDate')
         
-        if not past_events.empty:
-            latest_event = past_events.iloc[-1]
-            event_name = f"{latest_event['EventName']} {current_year}"
-            
-            # Load race session
-            session = fastf1.get_session(current_year, latest_event['RoundNumber'], 'R')
-            session.load(laps=True, telemetry=True, weather=False)
+        if not future_events.empty:
+            next_race_info = future_events.iloc[0]
+            race_date_utc = next_race_info['EventDate']
 
-            # Select columns from the result
-            results = session.results
-            if not results.empty:
-                results_df = results[[
-                    'Position', 'Abbreviation', 'TeamName', 
-                    'Time', 'Status', 'Points'
-                ]].copy()
-                
-                # Convert 'Position' values in integers
-                results_df['Position'] = results_df['Position'].astype(int)
-
-                # Format Timedelta values for better readability
-                # from "0 days 01:34:56.789000" to "01:34:56.789000"
-                results_df['Time'] = results_df['Time'].apply(
-                    lambda t: str(t)[7:-3] if pd.notnull(t) else 'N/A'
-                )
-                # Rename columns for better readability
-                results_df.rename(columns={
-                    'Abbreviation': 'Driver',
-                    'TeamName': 'Team'
-                }, inplace=True)
-
-            # --- Telemetry graph ---
-            # Pick first 3 drivers and compare their fastest lap
-            laps = session.laps
-            top_3_drivers = results.head(3)['Abbreviation'].tolist()
-            
-            fig, ax = plt.subplots(figsize=(10, 5))
-            fig.patch.set_alpha(0.0)
-            ax.set_facecolor('#1f2937') # Dark background
-            
-            # Pick 3 colors
-            colors = ['#4F709C', '#F24C3D', '#A1C398']
-            
-            for i, driver in enumerate(top_3_drivers):
-                fastest_lap = laps.pick_driver(driver).pick_fastest()
-                if fastest_lap is not None and isinstance(fastest_lap, pd.Series):
-                    telemetry = fastest_lap.get_car_data().add_distance()
-                    if not telemetry.empty:
-                        ax.plot(
-                            telemetry['Distance'], 
-                            telemetry['Speed'], 
-                            label=driver,
-                            color=colors[i]
-                        )
-
-            # Graph style
-            ax.set_title(f"Fastest lap speed comparison - {session.event['EventName']}", color='white')
-            ax.set_xlabel("Distance (m)", color='white')
-            ax.set_ylabel("Speed (Km/h)", color='white')
-            ax.legend()
-            ax.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.5)
-            plt.xticks(rotation=45, color='white')
-            plt.yticks(color='white')
-            plt.tight_layout()
-
-            # Convert graph to base64 image
-            buf = io.BytesIO()
-            fig.savefig(buf, format='png', transparent=True)
-            buf.seek(0)
-            string = base64.b64encode(buf.read())
-            plot_url = urllib.parse.quote(string)
+            # Format the date for the countdown
+            context['next_race'] = {
+                'name': next_race_info['EventName'],
+                'location': next_race_info['Location'],
+                'country': next_race_info['Country'],
+                'race_date_str': race_date_utc.strftime('%d %B %Y %H:%M UTC'),
+                'race_date_iso': race_date_utc.isoformat(),
+            }
         else:
-            error_message = "No events found for the current season."
+            # Season ended
+            context['next_race'] = {
+                'name': 'Season ended',
+                'location': 'No race :(',
+                'race_date_iso': None,
+            }
+
+        ergast = Ergast()
+        # Load driver standings
+        driver_standings_response = ergast.get_driver_standings(season=current_year)
+        if driver_standings_response and driver_standings_response.content:
+            df_drivers = driver_standings_response.content[0]
+            # Driver full name
+            df_drivers['driver'] = df_drivers['givenName'] + ' ' + df_drivers['familyName']
+            # Pick latest constructor
+            df_drivers['constructor'] = df_drivers['constructorNames'].str[-1]
+            # Cast points to int
+            df_drivers['points'] = pd.to_numeric(df_drivers['points']).astype(int)
+            # Select useful columns
+            context['driver_standings'] = df_drivers[['position', 'driver', 'constructor', 'points']].to_dict('records')
+
+        # Load constructors standings
+        constructor_standings_response = ergast.get_constructor_standings(season=current_year)
+        if constructor_standings_response and constructor_standings_response.content:
+            df_constructors = constructor_standings_response.content[0]
+            df_constructors.rename(columns={'constructorName': 'constructor'}, inplace=True)
+            df_constructors['points'] = pd.to_numeric(df_constructors['points']).astype(int)
+            context['constructor_standings'] = df_constructors[['position', 'constructor', 'points']].to_dict('records')
 
     except Exception as e:
-        error_message = f"Error while loading data: {e}"
-
-    # Context to send to the template
-    context = {
-        'results': results_df.to_dict('records') if not results_df.empty else [],
-        'plot_url': plot_url,
-        'error_message': error_message,
-        'event_name': event_name,
-    }
+        context['error_message'] = f"Error while loading data: {e}"
 
     return render(render_request, 'dashboard/index.html', context)
 
