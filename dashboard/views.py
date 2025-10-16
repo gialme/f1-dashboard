@@ -5,12 +5,20 @@ from django.shortcuts import render
 from datetime import datetime
 import os
 
+# Helper functions that enables fastf1 cache
+def setup_fastf1_cache():
+    """Enables fastf1 cache in the directory: './cache'"""
+    cache_dir = './cache'
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    if not fastf1.Cache.is_enabled():
+        fastf1.Cache.enable_cache(cache_dir)
 
 def dashboard_view(render_request):
     """
     This view fetches last F1 race data and creates a graph
     """
-
+    setup_fastf1_cache()
     context = {
         'next_race': None,
         'driver_standings': [],
@@ -18,14 +26,6 @@ def dashboard_view(render_request):
         'error_message': None,
     }
     try:
-        # Enable cache in order to speed up data loading
-        # Cache is stored in the project root
-        cache_dir = './cache'
-        if not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
-            
-        fastf1.Cache.enable_cache(cache_dir)
-
         # Fetch next race
         current_year = datetime.now().year
         schedule = fastf1.get_event_schedule(current_year, include_testing=False)
