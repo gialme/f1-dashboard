@@ -15,11 +15,11 @@ class DashboardViewTests(TestCase):
         except Exception as e:
                 print(f"Cache abilitation error: {e}")
 
-    def test_dashboard_view_status_code(self):
+    def test_homepage_view_status_code(self):
         """
-        Test status code 200 (OK) of the dashboard
+        Test status code 200 (OK) of the homepage
         """
-        response = self.client.get(reverse('dashboard'))
+        response = self.client.get(reverse('homepage'))
         self.assertEqual(response.status_code, 200)
 
     def test_root_url_resolves_to_homepage_view(self):
