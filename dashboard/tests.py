@@ -22,9 +22,9 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
 
-    def test_root_url_resolves_to_dashboard_view(self):
+    def test_root_url_resolves_to_homepage_view(self):
         """
-        Testa che l'URL associato al nome 'dashboard' risolva alla vista corretta.
+        Test correct view associated with the homepage
         """
-        found = resolve(reverse('dashboard'))
-        self.assertEqual(found.func, dashboard_view)
+        found = resolve(reverse('homepage'))
+        self.assertEqual(found.func, homepage_view)
