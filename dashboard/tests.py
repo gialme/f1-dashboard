@@ -1,6 +1,6 @@
 from django.test import TestCase, Client
 from django.urls import reverse, resolve
-from .views import dashboard_view
+from .views import homepage_view
 import fastf1
 
 class DashboardViewTests(TestCase):
