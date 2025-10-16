@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Titillium Web', sans-serif; background-color: #111827; }
+        .loader { border-top-color: #ef4444; -webkit-animation: spin 1s linear infinite; animation: spin 1s linear infinite; }
+        @-webkit-keyframes spin { 0% { -webkit-transform: rotate(0deg); } 100% { -webkit-transform: rotate(360deg); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-gray-200">
+    <div class="flex">
+        <aside class="w-64 bg-gray-900 text-white p-6 min-h-screen flex-col fixed hidden sm:flex">
+            <h1 class="text-2xl font-bold text-red-500 mb-10">F1 Dashboard</h1>
+            <nav>
+                <ul>
+                    <li class="mb-4">
+                        <a href="{% url 'homepage' %}" class="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors {% if active_page == 'homepage' %}bg-gray-700 text-white{% else %}text-gray-400{% endif %}">
+                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                            Homepage
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'last_race' %}" class="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors {% if active_page == 'last_race' %}bg-gray-700 text-white{% else %}text-gray-400{% endif %}">
+                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Last race results
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="mt-auto text-center text-xs text-gray-500">
+                <p>&copy; {% now "Y" %} F1 Dashboard</p>
+                <p>Data from fastf1</p>
+            </div>
+        </aside>
+
+        <main class="flex-1 sm:ml-64 p-4 md:p-8">
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+    {% block extra_js %}
+    {% endblock %}
+</body>
+</html>

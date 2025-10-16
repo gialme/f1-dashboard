@@ -14,9 +14,9 @@ def setup_fastf1_cache():
     if not fastf1.Cache.is_enabled():
         fastf1.Cache.enable_cache(cache_dir)
 
-def dashboard_view(render_request):
+def homepage_view(render_request):
     """
-    This view fetches last F1 race data and creates a graph
+    This view loads standings and next race info
     """
     setup_fastf1_cache()
     context = {
@@ -83,3 +83,46 @@ def dashboard_view(render_request):
 
     return render(render_request, 'dashboard/index.html', context)
 
+def last_race_view(render_request):
+    """
+    Loads last race data results
+    """
+    setup_fastf1_cache()
+    context = {
+        'results': [],
+        'event_name': "Last race",
+        'active_page': 'last_race',
+        'error_message': None
+    }
+
+    try:
+        # Fetch last disputed race
+        current_year = datetime.now().year
+        schedule = fastf1.get_event_schedule(current_year, include_testing=False)
+        # Convert to UTC timezone
+        schedule['EventDate'] = pd.to_datetime(schedule['EventDate'], utc=True)
+
+        # Filter past events using 'today', which also is timezone-aware
+        today = pd.Timestamp.now(tz='UTC')
+        past_events = schedule[schedule['EventDate'] < today]
+
+        if not past_events.empty:
+            latest_event = past_events.iloc[-1]
+            context['event_name'] = f"{latest_event['EventName']} {current_year}"
+
+            session = fastf1.get_session(current_year, latest_event['RoundNumber'], 'R')
+            session.load(laps=True, telemetry=False, weather=False)
+
+            results = session.results
+            if not results.empty:
+                results_df = results[['Position', 'DriverNumber', 'FullName', 'TeamName', 'Time', 'Status', 'Points', 'Laps']].copy()
+                results_df['Position'] = results_df['Position'].astype(int)
+                results_df['Time'] = results_df['Time'].apply(lambda t: str(t)[7:-3] if pd.notnull(t) else 'N/A')
+                results_df.rename(columns={'FullName': 'Driver', 'TeamName': 'Team'}, inplace=True)
+                context['results'] = results_df.to_dict('records')
+        else:
+            context['error_message'] = "No race found for the current season."
+    except Exception as e:
+        context['error_message'] = f"Error while loading data: {e}"
+    
+    return render(render_request, 'dashboard/last_race.html', context)

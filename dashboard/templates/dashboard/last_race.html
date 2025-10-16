@@ -1,0 +1,60 @@
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+    <header class="text-center mb-10">
+        <h1 class="text-3xl md:text-4xl font-bold text-white">{{ event_name }}</h1>
+        <p class="text-gray-400 mt-2">Last race results</p>
+    </header>
+
+    {% if error_message %}
+        <div class="bg-red-900 border border-red-600 text-red-200 px-4 py-3 rounded-lg" role="alert">
+            <strong class="font-bold">Error!</strong> {{ error_message }}
+        </div>
+    {% elif not results %}
+        <div class="flex flex-col items-center justify-center p-8 bg-gray-800 rounded-lg shadow-lg">
+            <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-600 h-24 w-24 mb-4"></div>
+            <h2 class="text-center text-white text-xl font-semibold">Loading last race results...</h2>
+            <p class="w-full text-center text-gray-400 mt-2">It might take a second...</p>
+        </div>
+    {% else %}
+        <div class="bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-700">
+            <div class="overflow-x-auto relative">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="text-xs text-gray-300 uppercase bg-gray-700">
+                        <tr>
+                            <th scope="col" class="py-3 px-4">Pos</th>
+                            <th scope="col" class="py-3 px-4">No</th>
+                            <th scope="col" class="py-3 px-4">Driver</th>
+                            <th scope="col" class="py-3 px-4">Team</th>
+                            <th scope="col" class="py-3 px-4">Time</th>
+                            <th scope="col" class="py-3 px-4 text-right">Points</th>
+                            <th scope="col" class="py-3 px-4">Giri</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results %}
+                        <tr class="border-b border-gray-700 hover:bg-gray-700/50">
+                            <td class="py-4 px-4 font-bold">{{ row.Position }}</td>
+                            <td class="py-4 px-4 text-gray-500">{{ row.DriverNumber }}</td>
+                            <td class="py-4 px-4 font-medium text-white whitespace-nowrap">{{ row.Driver }}</td>
+                            <td class="py-4 px-4">{{ row.Team }}</td>
+                            <td class="py-4 px-4">
+                                {% if row.Status == 'Finished' %}
+                                    {{ row.Time }}
+                                {% else %}
+                                    {{ row.Status }}
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-4 font-bold text-white text-right">{{ row.Points }}</td>
+                            <td class="py-4 px-4">{{ row.Laps }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}
