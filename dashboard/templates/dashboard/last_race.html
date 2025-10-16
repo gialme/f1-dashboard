@@ -1,10 +1,43 @@
 {% extends "dashboard/base.html" %}
 
 {% block content %}
+<div class="max-w-6xl mx-auto">
     <header class="text-center mb-10">
         <h1 class="text-3xl md:text-4xl font-bold text-white">{{ event_name }}</h1>
         <p class="text-gray-400 mt-2">Last race results</p>
     </header>
+
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <!-- Race Winner -->
+        <div class="bg-gray-800 border border-gray-700 rounded-2xl shadow-lg p-4 text-center">
+            <h3 class="text-gray-400 text-sm uppercase mb-2">Race Winner</h3>
+            <p class="text-xl font-bold text-white">
+                {{ race_winner|default:"—" }}
+            </p>
+        </div>
+
+        <!-- Pole Position -->
+        <div class="bg-gray-800 border border-gray-700 rounded-2xl shadow-lg p-4 text-center">
+            <h3 class="text-gray-400 text-sm uppercase mb-2">Pole Position</h3>
+            <p class="text-xl font-bold text-white">
+                {{ pole_position|default:"—" }}
+            </p>
+            <p class="text-gray-400 text-sm mt-1">
+                {{ pole_time|default:"—" }}
+            </p>
+        </div>
+
+        <!-- Fastest Lap -->
+        <div class="bg-gray-800 border border-gray-700 rounded-2xl shadow-lg p-4 text-center">
+            <h3 class="text-gray-400 text-sm uppercase mb-2">Fastest Lap</h3>
+            <p class="text-xl font-bold text-white">
+                {{ fastest_lap|default:"—" }}
+            </p>
+            <p class="text-gray-400 text-sm mt-1">
+                {{ fastest_lap_time|default:"—" }}
+            </p>
+        </div>
+    </section>
 
     {% if error_message %}
         <div class="bg-red-900 border border-red-600 text-red-200 px-4 py-3 rounded-lg" role="alert">
@@ -54,6 +87,7 @@
             </div>
         </div>
     {% endif %}
+</div>
 {% endblock %}
 
 {% block extra_js %}

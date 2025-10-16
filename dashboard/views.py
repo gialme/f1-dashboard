@@ -91,6 +91,11 @@ def last_race_view(render_request):
         'results': [],
         'event_name': "Last race",
         'active_page': 'last_race',
+        'race_winnwe': None,
+        'pole_position': None,
+        'pole_time': None,
+        'fastest_lap': None,
+        'fastest_lap_time': None,
         'error_message': None
     }
 
@@ -109,6 +114,7 @@ def last_race_view(render_request):
             latest_event = past_events.iloc[-1]
             context['event_name'] = f"{latest_event['EventName']} {current_year}"
 
+            # Race session
             session = fastf1.get_session(current_year, latest_event['RoundNumber'], 'R')
             session.load(laps=True, telemetry=False, weather=False)
 
@@ -121,6 +127,34 @@ def last_race_view(render_request):
                 results_df['Points'] = pd.to_numeric(results_df['Points']).astype(int)
                 results_df['Laps'] = pd.to_numeric(results_df['Laps']).astype(int)
                 context['results'] = results_df.to_dict('records')
+
+                # Race winner
+                winner = results_df[results_df['Position'] == 1].iloc[0]
+                context['race_winner'] = winner['Driver']
+
+                # Fastest lap
+                fastest_lap = session.laps.pick_fastest()
+                if fastest_lap is not None:
+                    driver_info = session.get_driver(fastest_lap['Driver'])
+                    context['fastest_lap'] = driver_info['FullName']
+                    lap_number = int(fastest_lap['LapNumber'])
+                    lap_time_str = str(fastest_lap['LapTime'])[7:-3]
+                    context["fastest_lap_time"] = f"Lap {lap_number} - {lap_time_str}"
+
+            # Pole (from qualifying)
+            quali_session = fastf1.get_session(current_year, latest_event['RoundNumber'], 'Q')
+            quali_session.load(laps=True, telemetry=False, weather=False)
+            pole_driver = quali_session.results.iloc[0]
+            context['pole_position'] = pole_driver['FullName']
+            if pd.notnull(pole_driver['Q3']):
+                context['pole_time'] = str(pole_driver['Q3'])[7:-3]
+            elif pd.notnull(pole_driver['Q2']):
+                context['pole_time'] = str(pole_driver['Q2'])[7:-3]
+            elif pd.notnull(pole_driver['Q1']):
+                context['pole_time'] = str(pole_driver['Q1'])[7:-3]
+            else:
+                context['pole_time'] = "N/A"
+
         else:
             context['error_message'] = "No race found for the current season."
     except Exception as e:
