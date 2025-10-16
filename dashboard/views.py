@@ -2,9 +2,6 @@ import fastf1
 from fastf1.ergast import Ergast
 import pandas as pd
 from django.shortcuts import render
-import matplotlib.pyplot as plt
-import io
-import urllib, base64
 from datetime import datetime
 import os
 
