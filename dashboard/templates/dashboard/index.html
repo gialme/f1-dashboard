@@ -11,20 +11,89 @@
             <strong class="font-bold">Error!</strong>
             <span class="block sm:inline">{{ error_message }}</span>
         </div>
-    {% elif not next_race and not driver_standings %}
-        <div class="flex flex-col items-center justify-center p-8 bg-gray-800 rounded-lg shadow-lg">
+    {% endif %}
+
+    {% if next_race %}
+    <div class="bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8 mb-10 border border-gray-700">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div>
+                <p class="text-red-500 font-semibold text-sm uppercase">Upcoming Race</p>
+                <h2 class="text-3xl lg:text-4xl font-bold text-white mt-1">{{ next_race.name }}</h2>
+                <p class="text-gray-400 text-lg mt-2">{{ next_race.location }}, {{ next_race.country }}</p>
+                {% if next_race.race_date_str %}<p class="text-gray-300 mt-1 font-semibold">{{ next_race.race_date_str }}</p>{% endif %}
+            </div>
+            {% if next_race.race_date_iso %}
+            <div id="countdown" data-race-date="{{ next_race.race_date_iso }}" class="grid grid-cols-4 gap-2 md:gap-4 text-center">
+                <div class="countdown-box rounded-lg p-3"><span id="days" class="text-3xl md:text-4xl font-bold">00</span><p class="text-xs text-gray-400 uppercase">Days</p></div>
+                <div class="countdown-box rounded-lg p-3"><span id="hours" class="text-3xl md:text-4xl font-bold">00</span><p class="text-xs text-gray-400 uppercase">Hours</p></div>
+                <div class="countdown-box rounded-lg p-3"><span id="minutes" class="text-3xl md:text-4xl font-bold">00</span><p class="text-xs text-gray-400 uppercase">Minutes</p></div>
+                <div class="countdown-box rounded-lg p-3"><span id="seconds" class="text-3xl md:text-4xl font-bold">00</span><p class="text-xs text-gray-400 uppercase">Seconds</p></div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if driver_standings %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-700">
+            <h3 class="text-2xl font-bold text-white mb-4">Driver Standings</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="text-xs text-gray-300 uppercase bg-gray-700">
+                        <tr>
+                            <th scope="col" class="py-3 px-4">Pos</th>
+                            <th scope="col" class="py-3 px-4">Driver</th>
+                            <th scope="col" class="py-3 px-4">Team</th>
+                            <th scope="col" class="py-3 px-4 text-right">Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for driver in driver_standings %}
+                        <tr class="border-b border-gray-700 hover:bg-gray-700/50">
+                            <td class="py-3 px-4 font-bold">{{ driver.position }}</td>
+                            <td class="py-3 px-4 font-medium text-white">{{ driver.driver }}</td>
+                            <td class="py-3 px-4 text-xs">{{ driver.constructor }}</td>
+                            <td class="py-3 px-4 font-bold text-white text-right">{{ driver.points }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-700">
+            <h3 class="text-2xl font-bold text-white mb-4">Constructor Standings</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="text-xs text-gray-300 uppercase bg-gray-700">
+                        <tr>
+                            <th scope="col" class="py-3 px-4">Pos</th>
+                            <th scope="col" class="py-3 px-4">Team</th>
+                            <th scope="col" class="py-3 px-4 text-right">Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for team in constructor_standings %}
+                        <tr class="border-b border-gray-700 hover:bg-gray-700/50">
+                            <td class="py-3 px-4 font-bold">{{ team.position }}</td>
+                            <td class="py-3 px-4 font-medium text-white">{{ team.constructor }}</td>
+                            <td class="py-3 px-4 font-bold text-white text-right">{{ team.points }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not next_race and not driver_standings and not error_message and not info_message %}
+         <div class="flex flex-col items-center justify-center p-8 bg-gray-800 rounded-lg shadow-lg">
             <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-600 h-24 w-24 mb-4"></div>
             <h2 class="text-center text-white text-xl font-semibold">Loading data...</h2>
         </div>
-    {% else %}
-        {% if next_race %}
-        <div class="bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8 mb-10 border border-gray-700">
-            </div>
-        {% endif %}
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            </div>
     {% endif %}
+
 {% endblock %}
 
 {% block extra_js %}

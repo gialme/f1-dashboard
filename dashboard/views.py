@@ -11,8 +11,7 @@ def setup_fastf1_cache():
     cache_dir = './cache'
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
-    if not fastf1.Cache.is_enabled():
-        fastf1.Cache.enable_cache(cache_dir)
+    fastf1.Cache.enable_cache(cache_dir)
 
 def homepage_view(render_request):
     """
@@ -119,6 +118,8 @@ def last_race_view(render_request):
                 results_df['Position'] = results_df['Position'].astype(int)
                 results_df['Time'] = results_df['Time'].apply(lambda t: str(t)[7:-3] if pd.notnull(t) else 'N/A')
                 results_df.rename(columns={'FullName': 'Driver', 'TeamName': 'Team'}, inplace=True)
+                results_df['Points'] = pd.to_numeric(results_df['Points']).astype(int)
+                results_df['Laps'] = pd.to_numeric(results_df['Laps']).astype(int)
                 context['results'] = results_df.to_dict('records')
         else:
             context['error_message'] = "No race found for the current season."
